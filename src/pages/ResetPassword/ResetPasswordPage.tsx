@@ -53,7 +53,7 @@ export function ResetPasswordPage() {
       await resetPassword({ newPassword, token });
       toast({
         title: 'Senha alterada com sucesso',
-        description: `Sua senha foi alterada com sucesso! Você já pode acessar sua conta.`,
+        description: `Sua senha foi alterada com sucesso!! Você já pode acessar sua conta.`,
         status: 'success',
         duration: 5000,
         isClosable: true,
