@@ -21,7 +21,7 @@ const fetchPosts = async (): Promise<UserPostInfo[]> => {
   return response.data;
 };
 
-const fetchPostsByUserId = async (id: UUID): Promise<UserPostInfo[]> => {
+const fetchPostsByUserId = async (id: string|  UUID): Promise<UserPostInfo[]> => {
   const response = await api.get<UserPostInfo[]>(`/public/posts/user/${id}`);
   return response.data;
 };

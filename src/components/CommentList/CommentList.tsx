@@ -3,8 +3,8 @@ import { MdArrowUpward, MdEdit, MdMoreVert } from 'react-icons/md';
 import { DataText } from '../DataText/DataText';
 import { useState } from 'react';
 import { Comment, UpdateComment } from '../../interface/CommentsInterface';
-import { updateUserComment, deleteUserComment } from '../../service/Comments';
-import { FaTrash} from 'react-icons/fa';
+import { FaTrash } from 'react-icons/fa';
+import { useCommentStore } from '../../store/commentStore';
 
 interface CommentListProps {
   comments: Comment[];
@@ -14,7 +14,9 @@ interface CommentListProps {
 export function CommentList({ comments, refreshComments }: CommentListProps) {
   const [editedCommentId, setEditedCommentId] = useState<string | null>(null);
   const [editedCommentText, setEditedCommentText] = useState<string>('');
-  const [isModalOpen, setIsModalOpen] = useState(false); 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const { removeComment, updateComment } = useCommentStore();
 
   const handleEditComment = async (commentId: string, commentText: string) => {
     setEditedCommentId(commentId);
@@ -22,18 +24,19 @@ export function CommentList({ comments, refreshComments }: CommentListProps) {
     setIsModalOpen(true); 
   };
 
+ 
   const handleSaveComment = async () => {
-    if (!editedCommentText.trim()) return;
+    if (!editedCommentText.trim()) return; 
 
     const updatedComment: UpdateComment = {
-      id: editedCommentId as string,
+      id: editedCommentId as string, 
       comment: editedCommentText,
     };
 
     try {
-      await updateUserComment(editedCommentId as string, updatedComment);
+      await updateComment(updatedComment);
       setIsModalOpen(false); 
-      setEditedCommentText('');
+      setEditedCommentText(''); 
       refreshComments(); 
     } catch (error) {
       console.error('Erro ao editar comentário:', error);
@@ -42,7 +45,8 @@ export function CommentList({ comments, refreshComments }: CommentListProps) {
 
   const handleDeleteComment = async (commentId: string) => {
     try {
-      await deleteUserComment(commentId);
+
+      await removeComment(commentId);
       refreshComments(); 
     } catch (error) {
       console.error('Erro ao excluir comentário:', error);
@@ -72,16 +76,13 @@ export function CommentList({ comments, refreshComments }: CommentListProps) {
             @{comment.username}
           </Text>
           <Box display="flex" justifyContent="space-between" paddingLeft="274px" mt="10px">
-          
             <MdEdit onClick={() => handleEditComment(comment.id, comment.comment)} />
-            <FaTrash onClick={() => handleDeleteComment(comment.id)}/>
-         
+            <FaTrash onClick={() => handleDeleteComment(comment.id)} />
           </Box>
           <Divider mt="15px" background="#DEDEDE" height="1px" mx="auto" maxWidth="85%" />
         </Box>
       ))}
 
-      {/* Modal de Edição */}
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <ModalOverlay />
         <ModalContent>

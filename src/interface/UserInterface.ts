@@ -82,7 +82,7 @@ export interface UserUpdatePost{
 }
 
 export interface UserPostInfo {
-  id: string;
+  id: string | UUID;
   username: string;
   title: string;
   description: string;

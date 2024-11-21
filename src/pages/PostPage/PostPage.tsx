@@ -2,42 +2,38 @@ import { Divider, Tag, Box, Text, Textarea, Button, useToast, Modal, ModalOverla
 import { MdArrowUpward, MdMoreVert, MdEdit } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { deleteUserPost, fetchPostById, updateUserPost } from '../../service/Post';
-import { UserPostById, UserPostInfo } from '../../interface/UserInterface';
+
+import { UserPostInfo } from '../../interface/UserInterface';
 import { UUID } from 'crypto';
 import { DataText } from '../../components/DataText/DataText';
 import { CreateComment } from '../../interface/CommentsInterface';
-import { createUserComment } from '../../service/Comments';
 import { CommentList } from '../../components/CommentList/CommentList';
 import { FaTrash } from 'react-icons/fa';
 import { usePostStore } from '../../store/postStore';
-
+import { useCommentStore } from '../../store/commentStore';
 
 export function PostPage() {
   const { id } = useParams<{ id: string | UUID }>();
   const navigate = useNavigate();
   const toast = useToast();
-  const [post, setPost] = useState<UserPostById | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [commentText, setCommentText] = useState<string>(''); 
+  const { post, getPostById, updatePost, removePost, incrementCommentCount } = usePostStore();
+  const {createComment} = useCommentStore()
+  const [newCommentText, setNewCommentText] = useState<string>(''); 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editedTitle, setEditedTitle] = useState('');
-  const [editedDescription, setEditedDescription] = useState('');
-  const [editedTags, setEditedTags] = useState<string>(''); 
+  const [editedTitle, setEditedTitle] = useState(post?.title || ''); 
+  const [editedDescription, setEditedDescription] = useState(post?.description || ''); 
+  const [editedTags, setEditedTags] = useState(post?.tags.join(', ') || ''); 
 
-  const getPost = async (id?: string | UUID) => {
+  const getPost = async (id: string | UUID) => {
     if (!id) return;
-    setLoading(true);
     try {
-      const response = await fetchPostById(id);
-      setPost(response);
-      setEditedTitle(response.title); 
-      setEditedDescription(response.description);
-      setEditedTags(response.tags.join(', ')); 
+      await getPostById(id);
+      setEditedTitle(post?.title || ''); 
+      setEditedDescription(post?.description || ''); 
+      setEditedTags(post?.tags.join(', ') || ''); 
+      
     } catch (error) {
       console.error('Erro ao buscar post:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -51,7 +47,7 @@ export function PostPage() {
     };
 
     try {
-      await updateUserPost(id, updatedPost);
+      await updatePost(id, updatedPost);
       toast({
         title: 'Post atualizado com sucesso!',
         status: 'success',
@@ -60,8 +56,7 @@ export function PostPage() {
         position: 'bottom',
       });
       setIsModalOpen(false);
-      getPost(id); 
-      usePostStore.getState().updatePost(updatedPost); 
+      getPost(id);  
     } catch (error) {
       console.error('Erro ao editar post:', error);
     }
@@ -69,8 +64,7 @@ export function PostPage() {
 
   const handleDeletePost = async (id: string | UUID) => {
     try {
-      await deleteUserPost(id);
-      usePostStore.getState().removePost(id); 
+      await removePost(id); 
       toast({
         title: 'Postagem excluída com sucesso!',
         status: 'success',
@@ -85,19 +79,17 @@ export function PostPage() {
   };
 
   const handleCommentSubmit = async () => {
-    if (commentText.trim() === '' || !id) return;
-  
+    if (!newCommentText.trim() || !id) return;
     const newComment: CreateComment = {
       id: id,
-      comment: commentText,
+      comment: newCommentText,
     };
   
     try {
-      await createUserComment(id, newComment); 
-      setCommentText(''); 
-      await getPost(id); 
-      usePostStore.getState().incrementCommentCount(id); 
-  
+      await createComment(newComment);
+      setNewCommentText('');
+      await getPost(id);
+      incrementCommentCount(id);
     } catch (error) {
       console.error('Erro ao enviar comentário:', error);
     }
@@ -109,7 +101,6 @@ export function PostPage() {
     }
   }, [id]);
 
-  if (loading) return <Text>Carregando...</Text>;
   if (!post) return <Text>Post não encontrado</Text>;
 
   return (
@@ -123,10 +114,9 @@ export function PostPage() {
         </Text>
         <FaTrash onClick={() => id && handleDeletePost(id)} />
         <MdEdit style={{ cursor: 'pointer', marginLeft: '10px' }} onClick={() => setIsModalOpen(true)} />
-        <MdMoreVert style={{ marginLeft: '100px' }} />
-        
+        <MdMoreVert />
       </Box>
-
+      
       <Text mt="9px" color="#000" fontSize="16px" fontWeight="600">
         {post.title}
       </Text>
@@ -158,8 +148,7 @@ export function PostPage() {
         </Text>
       </Box>
 
-      <CommentList comments={post.comment} refreshComments={() => getPost(id)} /> 
-
+      <CommentList comments={post.comment} refreshComments={() =>id && getPost(id)} /> 
 
       <Box mt="30px">
         <Text color="#281A45" fontSize="18px" fontWeight="500">
@@ -172,8 +161,8 @@ export function PostPage() {
           placeholder="Descreva sua resposta"
           width="320px"
           height="84px"
-          value={commentText}
-          onChange={(e) => setCommentText(e.target.value)}
+          value={newCommentText}
+          onChange={(e) => setNewCommentText(e.target.value)}
         />
         <Button
           padding="0px 24px"
@@ -197,19 +186,21 @@ export function PostPage() {
           <ModalHeader>Editar Post</ModalHeader>
           <ModalCloseButton />
           <ModalBody>
+            <Text>Titulo</Text>
             <Textarea
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
               placeholder="Título do post"
               mb="16px"
             />
+            <Text>Descrição</Text>
             <Textarea
               value={editedDescription}
               onChange={(e) => setEditedDescription(e.target.value)}
               placeholder="Descrição do post"
               mb="16px"
             />
-
+            <Text>Tags</Text>
             <Textarea
               value={editedTags}
               onChange={(e) => setEditedTags(e.target.value)} 
