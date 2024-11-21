@@ -55,10 +55,6 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
     }
   },
 
-  resetPosts: () => {
-    set({ posts: undefined, post: undefined });
-  },
-
   updatePost: async (id: string | UUID, updatedPost: UserPostInfo) => {
     try {
       await updateUserPost(id, updatedPost);
@@ -104,6 +100,10 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
       return state;
     });
   },
+  resetPosts: () => {
+    set({ posts: undefined, post: undefined });
+  },
+
 });
 
 export const usePostStore = create<PostState>()(

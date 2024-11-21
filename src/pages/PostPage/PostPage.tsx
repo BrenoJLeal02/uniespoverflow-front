@@ -11,11 +11,14 @@ import { CommentList } from '../../components/CommentList/CommentList';
 import { FaTrash } from 'react-icons/fa';
 import { usePostStore } from '../../store/postStore';
 import { useCommentStore } from '../../store/commentStore';
+import { useProfileStore } from '../../store/profileStore';
 
 export function PostPage() {
   const { id } = useParams<{ id: string | UUID }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const user = useProfileStore((state) => state.user); 
+
   const { post, getPostById, updatePost, removePost, incrementCommentCount } = usePostStore();
   const {createComment} = useCommentStore()
   const [newCommentText, setNewCommentText] = useState<string>(''); 
@@ -23,7 +26,7 @@ export function PostPage() {
   const [editedTitle, setEditedTitle] = useState(post?.title || ''); 
   const [editedDescription, setEditedDescription] = useState(post?.description || ''); 
   const [editedTags, setEditedTags] = useState(post?.tags.join(', ') || ''); 
-
+  const isAuthor = post?.user_id === user?.id;
   const getPost = async (id: string | UUID) => {
     if (!id) return;
     try {
@@ -38,12 +41,12 @@ export function PostPage() {
   };
 
   const handleEditPost = async () => {
-    if (!id || !post) return;
+    if (!id || !post || !isAuthor) return; 
     const updatedPost: UserPostInfo = {
-      ...post, 
-      title: editedTitle, 
+      ...post,
+      title: editedTitle,
       description: editedDescription,
-      tags: editedTags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''), 
+      tags: editedTags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== ''),
     };
 
     try {
@@ -56,15 +59,16 @@ export function PostPage() {
         position: 'bottom',
       });
       setIsModalOpen(false);
-      getPost(id);  
+      getPost(id);
     } catch (error) {
       console.error('Erro ao editar post:', error);
     }
   };
 
   const handleDeletePost = async (id: string | UUID) => {
+    if (!isAuthor) return; 
     try {
-      await removePost(id); 
+      await removePost(id);
       toast({
         title: 'Postagem excluída com sucesso!',
         status: 'success',
@@ -112,8 +116,12 @@ export function PostPage() {
         <Text fontSize="12px" fontWeight="500" color="#515151">
           <DataText created={post.created_at} updated={post.updated_at} sufix />
         </Text>
-        <FaTrash onClick={() => id && handleDeletePost(id)} />
-        <MdEdit style={{ cursor: 'pointer', marginLeft: '10px' }} onClick={() => setIsModalOpen(true)} />
+        {isAuthor && (
+          <>
+            <FaTrash onClick={() => id && handleDeletePost(id)} />
+            <MdEdit style={{ cursor: 'pointer', marginLeft: '10px' }} onClick={() => setIsModalOpen(true)} />
+          </>
+        )}
         <MdMoreVert />
       </Box>
       
