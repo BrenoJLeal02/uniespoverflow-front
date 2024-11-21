@@ -1,12 +1,13 @@
 import { create, StateCreator } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { fetchPostById, fetchPostsByUserId, updateUserPost, deleteUserPost } from '../service/Post';
-import { UserPostInfo, UserPostById } from '../interface/UserInterface';
+import { UserPostInfo, UserPostById, Role } from '../interface/UserInterface';
 import { UUID } from 'crypto';
 
 export interface PostState {
   posts?: UserPostInfo[];
   post?: UserPostById;
+  role?: Role;
 
   setPosts: (id: string | UUID) => Promise<void>;
   getPosts: () => UserPostInfo[] | undefined;
@@ -20,12 +21,13 @@ export interface PostState {
 const storeApi: StateCreator<PostState> = (set, get) => ({
   posts: undefined,
   post: undefined,
+  role:undefined,
 
   setPosts: async (id: string | UUID) => {
     try {
       const posts = await fetchPostsByUserId(id);
 
-      // Ordena os posts do mais recente para o mais antigo
+  
       const sortedPosts = posts.sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
@@ -67,6 +69,8 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
         }
         return state;
       });
+      const post = await fetchPostById(id); 
+      set({ post });
     } catch (error) {
       console.error('Erro ao editar post:', error);
     }
@@ -100,12 +104,12 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
       return state;
     });
   },
+
   resetPosts: () => {
     set({ posts: undefined, post: undefined });
   },
 
 });
-
 export const usePostStore = create<PostState>()(
   devtools(persist(storeApi, { name: 'post-storage' }))
 );

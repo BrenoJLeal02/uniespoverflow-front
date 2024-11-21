@@ -1,6 +1,6 @@
 import { Divider, Tag, Box, Text, Textarea, Button, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter } from '@chakra-ui/react';
 import { MdArrowUpward, MdMoreVert, MdEdit } from 'react-icons/md';
-import {  useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
 
@@ -11,7 +11,8 @@ import { CreateComment } from '../../interface/CommentsInterface';
 import { CommentList } from '../../components/CommentList/CommentList';
 import { usePostStore } from '../../store/postStore';
 import { useCommentStore } from '../../store/commentStore';
-import { useAuthStore } from '../../store/authStore'; 
+import { useAuthStore } from '../../store/authStore'; // Importando o store de autenticação
+import { useProfileStore } from '../../store/profileStore';
 
 export function PostPage() {
   const { id } = useParams<{ id: string | UUID }>();
@@ -20,7 +21,8 @@ export function PostPage() {
   
   const { post, getPostById, updatePost, removePost, incrementCommentCount } = usePostStore();
   const { createComment } = useCommentStore();
-  const { id: currentUserId } = useAuthStore(); 
+  const currentUserId = useAuthStore((state) => state.id);
+  const role = useProfileStore((state) => state.role)
   const [newCommentText, setNewCommentText] = useState<string>(''); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState(post?.title || ''); 
@@ -47,7 +49,7 @@ export function PostPage() {
       description: editedDescription,
       tags: editedTags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''), 
     };
-
+  
     try {
       await updatePost(id, updatedPost);
       toast({
@@ -57,14 +59,16 @@ export function PostPage() {
         isClosable: true,
         position: 'bottom',
       });
-      setIsModalOpen(false);
-      getPost(id);  
+  
+      setIsModalOpen(false); 
+      await getPost(id);  
     } catch (error) {
       console.error('Erro ao editar post:', error);
     }
   };
 
   const handleDeletePost = async (id: string | UUID) => {
+    if (!id) return;
     try {
       await removePost(id); 
       toast({
@@ -97,11 +101,22 @@ export function PostPage() {
     }
   };
 
-
+  useEffect(() => {
+    if (id) {
+      getPost(id);
+    }
+  }, [id]);
   if (!post) return <Text>Post não encontrado</Text>;
 
-
   const isPostOwner = currentUserId === post.user_id;
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+    setEditedTitle(post?.title || ''); 
+    setEditedDescription(post?.description || ''); 
+    setEditedTags(post?.tags.join(', ') || ''); 
+  };
+
 
   return (
     <Box>
@@ -113,14 +128,15 @@ export function PostPage() {
           <DataText created={post.created_at} updated={post.updated_at} sufix />
         </Text>
         
-        {isPostOwner && (
+        {(isPostOwner || role === "ADMIN") && (
           <>
             <FaTrash onClick={() => id && handleDeletePost(id)} />
-            <MdEdit style={{ cursor: 'pointer', marginLeft: '10px' }} onClick={() => setIsModalOpen(true)} />
+            <MdEdit style={{ cursor: 'pointer', marginLeft: '10px' }} onClick={handleOpenModal} />
           </>
         )}
+
         
-        <MdMoreVert />
+        <MdMoreVert  />
       </Box>
       
       <Text mt="9px" color="#000" fontSize="16px" fontWeight="600">
