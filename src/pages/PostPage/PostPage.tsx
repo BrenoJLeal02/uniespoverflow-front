@@ -1,6 +1,6 @@
 import { Divider, Tag, Box, Text, Textarea, Button, useToast, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter } from '@chakra-ui/react';
 import { MdArrowUpward, MdMoreVert, MdEdit } from 'react-icons/md';
-import { useEffect, useState } from 'react';
+import {  useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FaTrash } from 'react-icons/fa';
 
@@ -11,7 +11,7 @@ import { CreateComment } from '../../interface/CommentsInterface';
 import { CommentList } from '../../components/CommentList/CommentList';
 import { usePostStore } from '../../store/postStore';
 import { useCommentStore } from '../../store/commentStore';
-import { useAuthStore } from '../../store/authStore'; // Importando o store de autenticação
+import { useAuthStore } from '../../store/authStore'; 
 
 export function PostPage() {
   const { id } = useParams<{ id: string | UUID }>();
@@ -20,7 +20,7 @@ export function PostPage() {
   
   const { post, getPostById, updatePost, removePost, incrementCommentCount } = usePostStore();
   const { createComment } = useCommentStore();
-  const { id: currentUserId } = useAuthStore(); // Acessando o ID do usuário logado
+  const { id: currentUserId } = useAuthStore(); 
   const [newCommentText, setNewCommentText] = useState<string>(''); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState(post?.title || ''); 
@@ -97,15 +97,10 @@ export function PostPage() {
     }
   };
 
-  useEffect(() => {
-    if (id) {
-      getPost(id);
-    }
-  }, [id]);
 
   if (!post) return <Text>Post não encontrado</Text>;
 
-  // Verifica se o usuário logado é o proprietário do post
+
   const isPostOwner = currentUserId === post.user_id;
 
   return (
@@ -118,7 +113,6 @@ export function PostPage() {
           <DataText created={post.created_at} updated={post.updated_at} sufix />
         </Text>
         
-        {/* Verificação para mostrar os ícones de editar e excluir apenas para o autor */}
         {isPostOwner && (
           <>
             <FaTrash onClick={() => id && handleDeletePost(id)} />
