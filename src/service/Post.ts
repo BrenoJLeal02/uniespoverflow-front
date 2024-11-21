@@ -8,11 +8,11 @@ const createPost = async (data: UserCreatePost) => {
 };
 
 const updateUserPost = async(id: string | UUID, data: UserUpdatePost) =>{
-  const response = await api.patch(`/posts/${id}`, data)
+  const response = await api.put(`/posts/${id}`, data)
   return response
 }
 
-const deleteUserPost = async (id: UUID) => {
+const deleteUserPost = async (id:string | UUID) => {
   await api.delete(`/posts/${id}`);
 };
 

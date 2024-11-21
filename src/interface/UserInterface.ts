@@ -91,7 +91,7 @@ export interface UserPostInfo {
   created_at: string | number;
   updated_at: string;
   tags: string[];
-  commentCount: number;
+  commentCount?: number;
 }
 export interface UserPostById {
   id: string | UUID;

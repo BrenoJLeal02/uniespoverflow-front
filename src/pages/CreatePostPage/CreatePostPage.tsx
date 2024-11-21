@@ -20,6 +20,7 @@ import { createPost } from '../../service/Post';
 import { usePostStore } from '../../store/postStore';
 import { useAuthStore } from '../../store/authStore';
 import { handleErrors } from '../../utils/error';
+import { useNavigate } from 'react-router-dom';
 
 type FormData = {
   title: string;
@@ -35,6 +36,7 @@ export function CreatePostPage() {
       tags: [],
     },
   });
+  const navigate = useNavigate();
   const [loading, setLoading] = useState<boolean>(false);
   const [tags, setTags] = useState<string[]>([]);
   const [newTag, setNewTag] = useState<string>('');
@@ -66,6 +68,7 @@ export function CreatePostPage() {
 
       reset();
       setTags([]);
+      navigate('/my-profile')
     } catch (error: unknown) {
       handleErrors<FormData>(error, setError);
 
