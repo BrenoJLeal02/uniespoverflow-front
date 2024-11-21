@@ -2,31 +2,31 @@ import { Divider, Tag, Box, Text, Textarea, Button, useToast, Modal, ModalOverla
 import { MdArrowUpward, MdMoreVert, MdEdit } from 'react-icons/md';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { FaTrash } from 'react-icons/fa';
 
 import { UserPostInfo } from '../../interface/UserInterface';
 import { UUID } from 'crypto';
 import { DataText } from '../../components/DataText/DataText';
 import { CreateComment } from '../../interface/CommentsInterface';
 import { CommentList } from '../../components/CommentList/CommentList';
-import { FaTrash } from 'react-icons/fa';
 import { usePostStore } from '../../store/postStore';
 import { useCommentStore } from '../../store/commentStore';
-import { useProfileStore } from '../../store/profileStore';
+import { useAuthStore } from '../../store/authStore'; // Importando o store de autenticação
 
 export function PostPage() {
   const { id } = useParams<{ id: string | UUID }>();
   const navigate = useNavigate();
   const toast = useToast();
-  const user = useProfileStore((state) => state.user); 
-
+  
   const { post, getPostById, updatePost, removePost, incrementCommentCount } = usePostStore();
-  const {createComment} = useCommentStore()
+  const { createComment } = useCommentStore();
+  const { id: currentUserId } = useAuthStore(); // Acessando o ID do usuário logado
   const [newCommentText, setNewCommentText] = useState<string>(''); 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editedTitle, setEditedTitle] = useState(post?.title || ''); 
   const [editedDescription, setEditedDescription] = useState(post?.description || ''); 
   const [editedTags, setEditedTags] = useState(post?.tags.join(', ') || ''); 
-  const isAuthor = post?.user_id === user?.id;
+
   const getPost = async (id: string | UUID) => {
     if (!id) return;
     try {
@@ -34,19 +34,18 @@ export function PostPage() {
       setEditedTitle(post?.title || ''); 
       setEditedDescription(post?.description || ''); 
       setEditedTags(post?.tags.join(', ') || ''); 
-      
     } catch (error) {
       console.error('Erro ao buscar post:', error);
     }
   };
 
   const handleEditPost = async () => {
-    if (!id || !post || !isAuthor) return; 
+    if (!id || !post) return;
     const updatedPost: UserPostInfo = {
-      ...post,
-      title: editedTitle,
+      ...post, 
+      title: editedTitle, 
       description: editedDescription,
-      tags: editedTags.split(',').map((tag) => tag.trim()).filter((tag) => tag !== ''),
+      tags: editedTags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''), 
     };
 
     try {
@@ -59,16 +58,15 @@ export function PostPage() {
         position: 'bottom',
       });
       setIsModalOpen(false);
-      getPost(id);
+      getPost(id);  
     } catch (error) {
       console.error('Erro ao editar post:', error);
     }
   };
 
   const handleDeletePost = async (id: string | UUID) => {
-    if (!isAuthor) return; 
     try {
-      await removePost(id);
+      await removePost(id); 
       toast({
         title: 'Postagem excluída com sucesso!',
         status: 'success',
@@ -107,6 +105,9 @@ export function PostPage() {
 
   if (!post) return <Text>Post não encontrado</Text>;
 
+  // Verifica se o usuário logado é o proprietário do post
+  const isPostOwner = currentUserId === post.user_id;
+
   return (
     <Box>
       <Box mt="39px" display="flex" gap="35px">
@@ -116,12 +117,15 @@ export function PostPage() {
         <Text fontSize="12px" fontWeight="500" color="#515151">
           <DataText created={post.created_at} updated={post.updated_at} sufix />
         </Text>
-        {isAuthor && (
+        
+        {/* Verificação para mostrar os ícones de editar e excluir apenas para o autor */}
+        {isPostOwner && (
           <>
             <FaTrash onClick={() => id && handleDeletePost(id)} />
             <MdEdit style={{ cursor: 'pointer', marginLeft: '10px' }} onClick={() => setIsModalOpen(true)} />
           </>
         )}
+        
         <MdMoreVert />
       </Box>
       
@@ -156,7 +160,7 @@ export function PostPage() {
         </Text>
       </Box>
 
-      <CommentList comments={post.comment} refreshComments={() =>id && getPost(id)} /> 
+      <CommentList comments={post.comment} refreshComments={() => id && getPost(id)} /> 
 
       <Box mt="30px">
         <Text color="#281A45" fontSize="18px" fontWeight="500">
