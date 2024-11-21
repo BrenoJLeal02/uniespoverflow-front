@@ -11,7 +11,7 @@ import { CreateComment } from '../../interface/CommentsInterface';
 import { CommentList } from '../../components/CommentList/CommentList';
 import { usePostStore } from '../../store/postStore';
 import { useCommentStore } from '../../store/commentStore';
-import { useAuthStore } from '../../store/authStore'; // Importando o store de autenticação
+import { useAuthStore } from '../../store/authStore'; 
 import { useProfileStore } from '../../store/profileStore';
 
 export function PostPage() {
