@@ -12,6 +12,7 @@ import { CommentList } from '../../components/CommentList/CommentList';
 import { FaTrash } from 'react-icons/fa';
 import { usePostStore } from '../../store/postStore';
 
+
 export function PostPage() {
   const { id } = useParams<{ id: string | UUID }>();
   const navigate = useNavigate();
@@ -95,8 +96,6 @@ export function PostPage() {
       await createUserComment(id, newComment); 
       setCommentText(''); 
       await getPost(id); 
-  
-      // Atualize o commentCount no Zustand
       usePostStore.getState().incrementCommentCount(id); 
   
     } catch (error) {
@@ -159,7 +158,8 @@ export function PostPage() {
         </Text>
       </Box>
 
-      <CommentList comments={post.comment} />
+      <CommentList comments={post.comment} refreshComments={() => getPost(id)} /> 
+
 
       <Box mt="30px">
         <Text color="#281A45" fontSize="18px" fontWeight="500">
