@@ -106,6 +106,7 @@ export function PostPage() {
       getPost(id);
     }
   }, [id]);
+  
   if (!post) return <Text>Post não encontrado</Text>;
 
   const isPostOwner = currentUserId === post.user_id;

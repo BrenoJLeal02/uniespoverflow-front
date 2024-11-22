@@ -5,6 +5,8 @@ import { useState } from 'react';
 import { Comment, UpdateComment } from '../../interface/CommentsInterface';
 import { FaTrash } from 'react-icons/fa';
 import { useCommentStore } from '../../store/commentStore';
+import { useAuthStore } from '../../store/authStore';
+import { useProfileStore } from '../../store/profileStore';
 
 interface CommentListProps {
   comments: Comment[];
@@ -15,6 +17,8 @@ export function CommentList({ comments, refreshComments }: CommentListProps) {
   const [editedCommentId, setEditedCommentId] = useState<string | null>(null);
   const [editedCommentText, setEditedCommentText] = useState<string>('');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const currentUserId = useAuthStore((state) => state.id);
+  const role = useProfileStore((state) => state.role)
 
   const { removeComment, updateComment } = useCommentStore();
 
@@ -52,7 +56,7 @@ export function CommentList({ comments, refreshComments }: CommentListProps) {
       console.error('Erro ao excluir comentário:', error);
     }
   };
-
+  
   return (
     <>
       {comments.map((comment) => (
@@ -76,8 +80,13 @@ export function CommentList({ comments, refreshComments }: CommentListProps) {
             @{comment.username}
           </Text>
           <Box display="flex" justifyContent="space-between" paddingLeft="274px" mt="10px">
-            <MdEdit onClick={() => handleEditComment(comment.id, comment.comment)} />
-            <FaTrash onClick={() => handleDeleteComment(comment.id)} />
+            {(currentUserId == comment.id || role === "ADMIN") && (
+
+              <> 
+              <MdEdit onClick={() => handleEditComment(comment.id, comment.comment)} />
+              <FaTrash onClick={() => handleDeleteComment(comment.id)} />     
+              </>
+            )}
           </Box>
           <Divider mt="15px" background="#DEDEDE" height="1px" mx="auto" maxWidth="85%" />
         </Box>
