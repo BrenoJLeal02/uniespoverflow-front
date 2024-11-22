@@ -106,10 +106,10 @@ export function PostPage() {
       getPost(id);
     }
   }, [id]);
-  
+
   if (!post) return <Text>Post não encontrado</Text>;
 
-  const isPostOwner = currentUserId === post.user_id;
+ 
 
   const handleOpenModal = () => {
     setIsModalOpen(true);
@@ -129,7 +129,8 @@ export function PostPage() {
           <DataText created={post.created_at} updated={post.updated_at} sufix />
         </Text>
         
-        {(isPostOwner || role === "ADMIN") && (
+        {(currentUserId === post.user_id || role === "ADMIN") && (
+
           <>
             <FaTrash onClick={() => id && handleDeletePost(id)} />
             <MdEdit style={{ cursor: 'pointer', marginLeft: '10px' }} onClick={handleOpenModal} />

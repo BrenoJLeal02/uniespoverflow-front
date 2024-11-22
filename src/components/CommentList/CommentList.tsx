@@ -80,7 +80,7 @@ export function CommentList({ comments, refreshComments }: CommentListProps) {
             @{comment.username}
           </Text>
           <Box display="flex" justifyContent="space-between" paddingLeft="274px" mt="10px">
-            {(currentUserId == comment.id || role === "ADMIN") && (
+            {(currentUserId == comment.user_id  || role === "ADMIN") && (
 
               <> 
               <MdEdit onClick={() => handleEditComment(comment.id, comment.comment)} />
