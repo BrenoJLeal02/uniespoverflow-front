@@ -13,6 +13,7 @@ import {
   useBreakpointValue,
   FormErrorMessage,
   Text,
+  Kbd,
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -174,18 +175,18 @@ export function CreatePostPage() {
                 }
               }}
             />
-            <Box margin="10px 20px" color="gray.500" fontSize="14px">
-              <ul>
-                <li>
-                  <Text>Para criar uma tag pressione Enter</Text>
-                </li>
-                <li>
-                  <Text>
-                    Para tags com mais de uma palavra, separe-as com um hífen
-                  </Text>
-                  <Text>ex: back-end</Text>
-                </li>
-              </ul>
+          <Box margin="10px 20px" color="gray.500" fontSize="14px">
+                <ul>
+                  <li>
+                    <Text>
+                      Para criar uma tag pressione <Kbd>Enter</Kbd>
+                    </Text>
+                  </li>
+                  <li>
+                    <Text>Para tags com mais de uma palavra, separe-as com um hífen</Text>
+                    <Text>ex: back-end</Text>
+                  </li>
+                </ul>
             </Box>
           </FormControl>
 
