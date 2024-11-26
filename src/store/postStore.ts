@@ -30,17 +30,22 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
   setPosts: async (id: string | UUID) => {
     try {
       const posts = await fetchPostsByUserId(id);
-
-      const sortedPosts = posts.sort((a, b) => {
+  
+      // Adicionando likedByCurrentUser no estado
+      const updatedPosts = posts.map((post) => ({
+        ...post,
+        likedByCurrentUser: post.score > 0, // Verifica se o usuário curtiu o post baseado no score
+      }));
+  
+      const sortedPosts = updatedPosts.sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
-
+  
       set({ posts: sortedPosts });
     } catch (error) {
       console.error('Erro ao buscar posts:', error);
     }
   },
-
   getPosts: () => {
     const state = get();
     return state.posts;
@@ -121,13 +126,13 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
     // Atualizando o estado local (frontend)
     set((state) => {
       if (state.post?.id === postId) {
-        const updatedPost = { ...state.post, score: state.post.score + 1 };
+        const updatedPost = { ...state.post, score: state.post.score + 1, likedByCurrentUser: true };
         return { post: updatedPost }; // Retorna o estado atualizado
       }
       if (state.posts) {
         const updatedPosts = state.posts.map((post) =>
           post.id === postId
-            ? { ...post, score: post.score + 1 }
+            ? { ...post, score: post.score + 1, likedByCurrentUser: true }
             : post
         );
         return { posts: updatedPosts }; // Retorna o estado atualizado
@@ -155,13 +160,13 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
     // Atualizando o estado local (frontend)
     set((state) => {
       if (state.post?.id === postId) {
-        const updatedPost = { ...state.post, score: state.post.score - 1 };
+        const updatedPost = { ...state.post, score: state.post.score - 1, likedByCurrentUser: false };
         return { post: updatedPost }; // Retorna o estado atualizado
       }
       if (state.posts) {
         const updatedPosts = state.posts.map((post) =>
           post.id === postId
-            ? { ...post, score: post.score - 1 }
+            ? { ...post, score: post.score - 1, likedByCurrentUser: false }
             : post
         );
         return { posts: updatedPosts }; // Retorna o estado atualizado

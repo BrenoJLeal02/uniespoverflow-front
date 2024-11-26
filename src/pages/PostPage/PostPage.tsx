@@ -9,7 +9,7 @@ import {
   IconButton,
 } from '@chakra-ui/react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { UUID } from 'crypto';
@@ -29,46 +29,43 @@ export function PostPage() {
   const [liked, setLiked] = useState<boolean>(false);
   const isDesktop = useBreakpointValue({ base: false, md: true });
 
-  const getPost = async (id: string | UUID) => {
+  const getPost = useCallback(async (id: string | UUID) => {
     if (!id) return;
     setLoading(true);
     try {
-      await getPostById(id);
-
-      // Verifica se o post foi curtido pelo usuário
-      const userLikedPost = post?.likes.includes(currentUserId);
-      setLiked(userLikedPost); // Atualiza o estado de 'liked' com base no usuário
+      await getPostById(id);  // Atualiza o post diretamente na store
+      setLiked(post?.likedByCurrentUser || false);  // Atualiza o estado 'liked' diretamente
     } catch (error) {
-      console.error('Erro ao buscar post:', error);
+      console.error('Error fetching post:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [getPostById]);
+  
 
   const handleLike = async () => {
     if (!postId || !currentUserId) return;
 
     try {
       if (liked) {
-        await dislikePost(postId); // Descurtir o post
+        await dislikePost(postId); // Dislike the post
       } else {
-        await likePost(postId); // Curtir o post
+        await likePost(postId); // Like the post
       }
-      setLiked(!liked); // Alterna o estado de 'liked'
-      await getPost(postId); // Atualiza o post com o novo estado
+      setLiked(!liked); // Toggle the 'liked' state
     } catch (error) {
-      console.error('Erro ao curtir/descurtir o post:', error);
+      console.error('Error liking/disliking the post:', error);
     }
   };
 
   useEffect(() => {
     if (postId) {
-      getPost(postId);
+      getPost(postId);  // Load the post when the postId changes
     }
-  }, [postId]);
+  }, [postId, getPost]);  // Dependencies include getPost (which is memoized by useCallback)
 
-  if (loading) return <Text>Carregando...</Text>;
-  if (!post) return <Text>Post não encontrado</Text>;
+  if (loading) return <Text>Loading...</Text>;
+  if (!post) return <Text>Post not found</Text>;
 
   return (
     <Box>
