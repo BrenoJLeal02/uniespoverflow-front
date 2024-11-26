@@ -107,9 +107,17 @@ export interface UserPostById {
   tags: string[];
   username: string;
 }
-export interface UserLike{
+export interface UserPostLikeAndDislike {
+  postId: string | UUID;
+  userId: string | UUID;
+}
+
+export interface UserCommentLikeAndDislike{
   id: string; 
-  user_id: string;
+  userId:string; 
+  commentId:string; 
+
+
 }
 
 export interface UserNotifications {

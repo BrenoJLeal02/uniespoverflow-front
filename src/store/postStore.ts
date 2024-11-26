@@ -1,9 +1,10 @@
 import { create, StateCreator } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import { fetchPostById, fetchPostsByUserId, updateUserPost, deleteUserPost } from '../service/Post';
-import { UserPostInfo, UserPostById, Role } from '../interface/UserInterface';
+import { UserPostInfo, UserPostById, Role, UserPostLikeAndDislike } from '../interface/UserInterface';
 import { UUID } from 'crypto';
 import { handleErrors } from '../utils/error';
+import { createUserLike, createUserDislike } from '../service/Like'; // Importando as funções
 
 export interface PostState {
   posts?: UserPostInfo[];
@@ -17,18 +18,19 @@ export interface PostState {
   updatePost: (id: string | UUID, updatedPost: UserPostInfo) => Promise<void>;
   removePost: (id: string | UUID) => Promise<void>;
   incrementCommentCount: (postId: string | UUID) => void;
+  likePost: (postId: string | UUID) => Promise<void>;
+  dislikePost: (postId: string | UUID) => Promise<void>;
 }
 
 const storeApi: StateCreator<PostState> = (set, get) => ({
   posts: undefined,
   post: undefined,
-  role:undefined,
+  role: undefined,
 
   setPosts: async (id: string | UUID) => {
     try {
       const posts = await fetchPostsByUserId(id);
 
-  
       const sortedPosts = posts.sort((a, b) => {
         return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       });
@@ -74,7 +76,7 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
       set({ post });
     } catch (error) {
       const errorMessages = handleErrors(error);
-      throw new Error(errorMessages.join(', '))
+      throw new Error(errorMessages.join(', '));
     }
   },
 
@@ -107,11 +109,79 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
     });
   },
 
+  likePost: async (postId: string | UUID) => {
+    const post = get().post;
+    if (!post) return;
+
+    const data: UserPostLikeAndDislike = { 
+      postId, 
+      userId: 'user-uuid' // Aqui você precisa passar o UUID do usuário logado
+    };
+
+    // Atualizando o estado local (frontend)
+    set((state) => {
+      if (state.post?.id === postId) {
+        const updatedPost = { ...state.post, score: state.post.score + 1 };
+        return { post: updatedPost }; // Retorna o estado atualizado
+      }
+      if (state.posts) {
+        const updatedPosts = state.posts.map((post) =>
+          post.id === postId
+            ? { ...post, score: post.score + 1 }
+            : post
+        );
+        return { posts: updatedPosts }; // Retorna o estado atualizado
+      }
+      return state;
+    });
+
+    try {
+      // Requisição para o backend para curtir o post
+      await createUserLike(postId, data);
+    } catch (error) {
+      console.error("Erro ao curtir o post:", error);
+    }
+  },
+
+  dislikePost: async (postId: string | UUID) => {
+    const post = get().post;
+    if (!post) return;
+
+    const data: UserPostLikeAndDislike = { 
+      postId, 
+      userId: 'user-uuid' // Aqui você precisa passar o UUID do usuário logado
+    };
+
+    // Atualizando o estado local (frontend)
+    set((state) => {
+      if (state.post?.id === postId) {
+        const updatedPost = { ...state.post, score: state.post.score - 1 };
+        return { post: updatedPost }; // Retorna o estado atualizado
+      }
+      if (state.posts) {
+        const updatedPosts = state.posts.map((post) =>
+          post.id === postId
+            ? { ...post, score: post.score - 1 }
+            : post
+        );
+        return { posts: updatedPosts }; // Retorna o estado atualizado
+      }
+      return state;
+    });
+
+    try {
+      // Requisição para o backend para descurtir o post
+      await createUserDislike(postId, data);
+    } catch (error) {
+      console.error("Erro ao descurtir o post:", error);
+    }
+  },
+
   resetPosts: () => {
     set({ posts: undefined, post: undefined });
   },
-
 });
+
 export const usePostStore = create<PostState>()(
   devtools(persist(storeApi, { name: 'post-storage' }))
 );
