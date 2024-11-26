@@ -117,70 +117,61 @@ const storeApi: StateCreator<PostState> = (set, get) => ({
   likePost: async (postId: string | UUID) => {
     const post = get().post;
     if (!post) return;
-
+  
+    if (post.likedByCurrentUser) {
+      console.log("Você já curtiu este post.");
+      return;
+    }
+  
     const data: UserPostLikeAndDislike = { 
       postId, 
-      userId: 'user-uuid' // Aqui você precisa passar o UUID do usuário logado
+      userId: 'user-uuid'  // Passando o ID do usuário
     };
-
-    // Atualizando o estado local (frontend)
+  
     set((state) => {
       if (state.post?.id === postId) {
         const updatedPost = { ...state.post, score: state.post.score + 1, likedByCurrentUser: true };
-        return { post: updatedPost }; // Retorna o estado atualizado
-      }
-      if (state.posts) {
-        const updatedPosts = state.posts.map((post) =>
-          post.id === postId
-            ? { ...post, score: post.score + 1, likedByCurrentUser: true }
-            : post
-        );
-        return { posts: updatedPosts }; // Retorna o estado atualizado
+        return { post: updatedPost }; // Atualiza o estado de curtir o post
       }
       return state;
     });
-
+  
     try {
-      // Requisição para o backend para curtir o post
       await createUserLike(postId, data);
     } catch (error) {
       console.error("Erro ao curtir o post:", error);
     }
   },
-
+  
   dislikePost: async (postId: string | UUID) => {
     const post = get().post;
     if (!post) return;
-
+  
+    if (!post.likedByCurrentUser) {
+      console.log("Você ainda não curtiu este post.");
+      return;
+    }
+  
     const data: UserPostLikeAndDislike = { 
       postId, 
-      userId: 'user-uuid' // Aqui você precisa passar o UUID do usuário logado
+      userId: 'user-uuid'  // Passando o ID do usuário
     };
-
-    // Atualizando o estado local (frontend)
+  
     set((state) => {
       if (state.post?.id === postId) {
         const updatedPost = { ...state.post, score: state.post.score - 1, likedByCurrentUser: false };
-        return { post: updatedPost }; // Retorna o estado atualizado
-      }
-      if (state.posts) {
-        const updatedPosts = state.posts.map((post) =>
-          post.id === postId
-            ? { ...post, score: post.score - 1, likedByCurrentUser: false }
-            : post
-        );
-        return { posts: updatedPosts }; // Retorna o estado atualizado
+        return { post: updatedPost }; // Atualiza o estado de descurtir o post
       }
       return state;
     });
-
+  
     try {
-      // Requisição para o backend para descurtir o post
       await createUserDislike(postId, data);
     } catch (error) {
       console.error("Erro ao descurtir o post:", error);
     }
   },
+ 
 
   resetPosts: () => {
     set({ posts: undefined, post: undefined });

@@ -113,6 +113,7 @@ export interface UserPostById {
 export interface UserPostLikeAndDislike {
   postId: string | UUID;
   userId: string | UUID;
+  id:string;
 }
 
 export interface UserCommentLikeAndDislike{

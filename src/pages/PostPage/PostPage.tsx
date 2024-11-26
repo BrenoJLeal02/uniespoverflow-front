@@ -6,66 +6,44 @@ import {
   useBreakpointValue,
   Tabs,
   Flex,
-  IconButton,
 } from '@chakra-ui/react';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { useEffect, useState, useCallback } from 'react';
+import { AiOutlineUnlock, AiOutlineLock } from 'react-icons/ai';
+import { MdArrowUpward } from 'react-icons/md';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
 import { UUID } from 'crypto';
 import { DataText } from '../../components/DataText/DataText';
 import MenuPostComponent from '../../components/MenuPostComponent/MenuPostComponent';
 import { CommentList } from '../../components/CommentList/CommentList';
-import { CreateUserComment } from '../../components/CreateUserComment/CreateUserComment';
 
 import { usePostStore } from '../../store/postStore';
-import { useAuthStore } from '../../store/authStore';
+import {CreateUserComment } from '../../components/CreateUserComment/CreateUserComment';
 
 export function PostPage() {
-  const { id: postId } = useParams<{ id: string | UUID }>();
-  const { post, getPostById, incrementCommentCount, likePost, dislikePost } = usePostStore();
-  const { id: currentUserId } = useAuthStore();
-  const [loading, setLoading] = useState<boolean>(false);
-  const [liked, setLiked] = useState<boolean>(false);
+  const { id } = useParams<{ id: string | UUID }>(); 
+  const { post, getPostById,incrementCommentCount } = usePostStore();
+  const [loading] = useState<boolean>(false);
   const isDesktop = useBreakpointValue({ base: false, md: true });
-
-  const getPost = useCallback(async (id: string | UUID) => {
-    if (!id) return;
-    setLoading(true);
-    try {
-      await getPostById(id);  // Atualiza o post diretamente na store
-      setLiked(post?.likedByCurrentUser || false);  // Atualiza o estado 'liked' diretamente
-    } catch (error) {
-      console.error('Error fetching post:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [getPostById]);
   
-
-  const handleLike = async () => {
-    if (!postId || !currentUserId) return;
-
+  const getPost = async (id: string | UUID) => {
+    if (!id) return;
     try {
-      if (liked) {
-        await dislikePost(postId); // Dislike the post
-      } else {
-        await likePost(postId); // Like the post
-      }
-      setLiked(!liked); // Toggle the 'liked' state
+      await getPostById(id);
     } catch (error) {
-      console.error('Error liking/disliking the post:', error);
+      console.error('Erro ao buscar post:', error);
     }
   };
 
   useEffect(() => {
-    if (postId) {
-      getPost(postId);  // Load the post when the postId changes
+    if (id) {
+      getPost(id);
     }
-  }, [postId, getPost]);  // Dependencies include getPost (which is memoized by useCallback)
+  }, [id]);
 
-  if (loading) return <Text>Loading...</Text>;
-  if (!post) return <Text>Post not found</Text>;
+
+  if (loading) return <Text>Carregando...</Text>;
+  if (!post) return <Text>Post não encontrado</Text>;
 
   return (
     <Box>
@@ -100,14 +78,7 @@ export function PostPage() {
 
       <Box mt={isDesktop ? '24px' : '8px'} display="flex" alignItems="center">
         <Box display="flex" flexDirection="column" alignItems="center">
-          <IconButton
-            aria-label="Curtir ou descurtir"
-            icon={liked ? <FaHeart color="#805AD5" /> : <FaRegHeart />}
-            onClick={handleLike}
-            background="transparent"
-            _hover={{ transform: 'scale(1.1)' }}
-            _active={{ transform: 'scale(1.2)' }}
-          />
+          <MdArrowUpward style={{ width: '20px', height: '24px' }} />
           <Text fontSize="16px" fontWeight="600" color="#000">
             {post.score}
           </Text>
@@ -141,23 +112,30 @@ export function PostPage() {
       <Box>
         <Divider mt="15px" background="#DEDEDE" height="1px" />
         <Flex gap="15px">
-          <Text mt="5px" color="#515151" fontSize="12px" fontWeight="500">
-            {post.score} curtida{post.score !== 1 ? 's' : ''}
+          <Text
+            mt="5px"
+            color="#515151"
+            fontSize="12px"
+            fontWeight="500"
+          >
+            {post.score} curtida{post.score!== 1 ? 's' : ''}
           </Text>
-          <Text mt="5px" color="#515151" fontSize="12px" fontWeight="500">
-            {post.comment.length} comentário
-            {post.comment.length !== 1 ? 's' : ''}
+          <Text
+            mt="5px"
+            color="#515151"
+            fontSize="12px"
+            fontWeight="500"
+          >
+            {post.comment.length} comentário{post.comment.length !== 1 ? 's' : ''}
           </Text>
         </Flex>
+
       </Box>
 
-      <CommentList
-        comments={post.comment}
-        refreshComments={() => postId && getPost(postId)}
-      />
-
+      <CommentList comments={post.comment} refreshComments={() => id && getPost(id)} /> 
+      
       <CreateUserComment
-        postId={postId as string}
+        postId={id as string}
         incrementCommentCount={incrementCommentCount}
         getPost={getPost}
       />
@@ -178,10 +156,193 @@ export function PostPage() {
         justifyContent="center"
         alignItems="center"
       >
-        <Text color="#281A45" textAlign="center" fontSize="18px" fontWeight="500">
+        <Text
+          color="#281A45"
+          textAlign="center"
+          fontSize="18px"
+          fontWeight="500"
+        >
           Relacionados
         </Text>
       </Tabs>
+      <Box>
+        <Box
+          mt="62px"
+          color="#515151"
+          fontSize="12px"
+          fontWeight="500"
+          lineHeight="24px"
+          display="flex"
+        >
+          <Text paddingRight="26px">7 curtidas</Text>
+          <Text paddingRight={isDesktop ? '450px' : '135px'}>
+            4 comentários
+          </Text>
+          <AiOutlineUnlock style={{ width: '20px', height: '20px' }} />
+        </Box>
+        <Text
+          width="327px"
+          color="#000"
+          mt="9px"
+          fontSize="16px"
+          fontStyle="normal"
+          fontWeight="600"
+          lineHeight="24px"
+        >
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        </Text>
+        <Text
+          width="339px"
+          height="85px"
+          flexDirection="column"
+          justifyContent="center"
+          display="flex"
+          color="#111"
+          fontSize="14px"
+          fontWeight="500"
+          lineHeight="24px"
+        >
+          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+          nisi ut aliquip ex ea commodo consequat.
+        </Text>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box flexDirection="column" display="flex" gap="8px">
+            <Tag
+              mt="6px"
+              size="md"
+              variant="solid"
+              colorScheme="purple"
+              display="inline-flex"
+              height="24px"
+              padding="0px 8px"
+              alignItems="center"
+              gap="8px"
+              borderRadius="6px"
+            >
+              Tag name
+            </Tag>
+            <Tag
+              size="md"
+              variant="solid"
+              colorScheme="purple"
+              display="inline-flex"
+              height="24px"
+              padding="0px 8px"
+              alignItems="center"
+              gap="8px"
+              borderRadius="6px"
+              background="#4B6820"
+            >
+              Tag number 2
+            </Tag>
+          </Box>
+          <Box alignItems="flex-end" flexDirection="column" display="flex">
+            <Text
+              color="#515151"
+              fontSize="12px"
+              fontWeight="500"
+              lineHeight="20px"
+            >
+              <DataText
+                created={post.created_at}
+                updated={post.updated_at}
+                sufix
+              />
+            </Text>
+            <Text
+              color="#805AD5"
+              fontSize="12px"
+              fontWeight="500"
+              lineHeight="20px"
+            >
+              @username
+            </Text>
+          </Box>
+        </Box>
+      </Box>
+      <Divider mt="19px"></Divider>
+      <Box>
+        <Box
+          mt="32px"
+          color="#515151"
+          fontSize="12px"
+          fontWeight="500"
+          lineHeight="24px"
+          display="flex"
+        >
+          <Text paddingRight="26px">21 curtida</Text>
+          <Text paddingRight={isDesktop ? '450px' : '135px'}>
+            12 comentários
+          </Text>
+          <AiOutlineLock style={{ width: '20px', height: '20px' }} />
+        </Box>
+        <Text
+          width="327px"
+          color="#000"
+          mt="9px"
+          fontSize="16px"
+          fontStyle="normal"
+          fontWeight="600"
+          lineHeight="24px"
+        >
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+        </Text>
+        <Text
+          width="339px"
+          height="85px"
+          flexDirection="column"
+          justifyContent="center"
+          display="flex"
+          color="#111"
+          fontSize="14px"
+          fontWeight="500"
+          lineHeight="24px"
+        >
+          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris
+          nisi ut aliquip ex ea commodo consequat.
+        </Text>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box flexDirection="column" display="flex" gap="8px">
+            <Tag
+              mt="6px"
+              size="md"
+              variant="solid"
+              colorScheme="purple"
+              display="inline-flex"
+              height="24px"
+              padding="0px 8px"
+              alignItems="center"
+              gap="8px"
+              borderRadius="6px"
+            >
+              Tag name
+            </Tag>
+          </Box>
+          <Box alignItems="flex-end" flexDirection="column" display="flex">
+            <Text
+              color="#515151"
+              fontSize="12px"
+              fontWeight="500"
+              lineHeight="20px"
+            >
+              <DataText
+                created={post.created_at}
+                updated={post.updated_at}
+                sufix
+              />
+            </Text>
+            <Text
+              color="#805AD5"
+              fontSize="12px"
+              fontWeight="500"
+              lineHeight="20px"
+            >
+              @usernam
+            </Text>
+          </Box>
+        </Box>
+      </Box>
+      <Divider mb="37px" mt="37px"></Divider>
     </Box>
   );
 }
